@@ -397,7 +397,82 @@ main { display: block; }
   line-height: 1.45;
 }
 
-.dept { margin-top: clamp(26px, 5vh, 46px); }
+/* --- 8b. Crew finder: search + jump chips -------------------------------
+   Sticks under the masthead as the list scrolls, so search and the jump
+   chips stay a thumb's reach away instead of stranded at the top of a long
+   phone scroll. */
+.finder {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  background: var(--surface);
+  border-bottom: var(--rule-hair) solid var(--line);
+}
+
+.finder__input {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: var(--rule-mid) solid var(--text-dim);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;               /* 16px keeps iOS Safari from zooming in on focus */
+  transition: border-color var(--dur-ui) var(--ease-cut);
+}
+.finder__input::placeholder { color: var(--text-dim); }
+.finder__input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  border-bottom-width: var(--rule-heavy);
+}
+
+.finder__jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jump-chip {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: var(--rule-hair) solid var(--line);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  transition: color var(--dur-ui) var(--ease-cut), border-color var(--dur-ui) var(--ease-cut);
+}
+@media (hover: hover) and (pointer: fine) {
+  .jump-chip:hover { color: var(--text); border-color: var(--accent); }
+}
+.jump-chip:focus-visible { color: var(--text); }
+
+.finder__empty {
+  margin-top: var(--s4);
+  padding: var(--s4);
+  border: var(--rule-hair) solid var(--line);
+  color: var(--text-dim);
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.finder__empty a {
+  color: var(--text);
+  border-bottom: var(--rule-hair) solid var(--accent);
+}
+
+.dept {
+  margin-top: clamp(26px, 5vh, 46px);
+  /* Keeps a jumped-to heading clear of the sticky finder bar above it. */
+  scroll-margin-top: calc(var(--finder-h, 96px) + var(--s3));
+}
 
 .dept__title {
   font-family: var(--font-display);

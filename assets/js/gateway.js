@@ -161,6 +161,10 @@
     return node;
   }
 
+  function slugify(text) {
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
   function renderCrew() {
     var host = $('crew-body');
     if (!host) return;
@@ -168,6 +172,7 @@
 
     (crewCfg.departments || []).forEach(function (dept) {
       var section = el('section', 'dept');
+      section.id = 'dept-' + slugify(dept.title);
       section.appendChild(el('h2', 'dept__title', dept.title));
       var list = el('div', 'rooms');
       (dept.rooms || []).forEach(function (r) {
@@ -176,6 +181,88 @@
       section.appendChild(list);
       host.appendChild(stagger(section));
     });
+  }
+
+  /* --- The crew finder: search + jump chips ------------------------------
+     A flat list of twelve rooms is a lot to scroll through on a phone, so
+     the crew page gets two ways to cut that down: type to filter, or tap a
+     department to jump straight to it. Both live in one small bar that
+     stays on screen while the list scrolls underneath it. */
+
+  var crewSearch = $('crew-search');
+  var crewJump = $('crew-jump');
+  var crewEmpty = $('crew-empty');
+  var crewEmptyTerm = $('crew-empty-term');
+
+  function buildCrewJump() {
+    if (!crewJump) return;
+    (crewCfg.departments || []).forEach(function (dept) {
+      var chip = el('button', 'jump-chip', dept.title);
+      chip.type = 'button';
+      chip.dataset.target = 'dept-' + slugify(dept.title);
+      crewJump.appendChild(chip);
+    });
+  }
+
+  function filterCrew(term) {
+    term = (term || '').trim().toLowerCase();
+    var visible = 0;
+
+    document.querySelectorAll('#crew-body .dept').forEach(function (section) {
+      var sectionHasMatch = false;
+      section.querySelectorAll('.room').forEach(function (btn) {
+        var room = rooms[btn.dataset.key];
+        var match = !term || !room ? true : (
+          room.label.toLowerCase().indexOf(term) !== -1 ||
+          room.name.toLowerCase().indexOf(term) !== -1 ||
+          (room.blurb || '').toLowerCase().indexOf(term) !== -1
+        );
+        btn.hidden = !match;
+        if (match) { sectionHasMatch = true; visible++; }
+      });
+      section.hidden = !sectionHasMatch;
+    });
+
+    if (crewEmpty) {
+      crewEmpty.hidden = visible !== 0;
+      if (crewEmptyTerm) crewEmptyTerm.textContent = term;
+    }
+    if (crewJump) crewJump.hidden = !!term;
+  }
+
+  function syncFinderHeight() {
+    var finder = document.querySelector('.finder');
+    if (!finder) return;
+    document.documentElement.style.setProperty('--finder-h', finder.getBoundingClientRect().height + 'px');
+  }
+
+  if (crewSearch) {
+    buildCrewJump();
+    crewSearch.addEventListener('input', function () { filterCrew(crewSearch.value); });
+
+    if (crewJump) {
+      crewJump.addEventListener('click', function (e) {
+        var chip = e.target.closest('.jump-chip');
+        if (!chip) return;
+        var target = $(chip.dataset.target);
+        if (!target) return;
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      });
+    }
+
+    window.addEventListener('resize', syncFinderHeight);
+    window.addEventListener('load', syncFinderHeight);
+    syncFinderHeight();
+  }
+
+  function resetCrewFinder() {
+    if (!crewSearch) return;
+    crewSearch.value = '';
+    filterCrew('');
+    /* The bar is hidden (display:none) until this view is shown, so its
+       height could only be measured now — not at script load. */
+    syncFinderHeight();
   }
 
   function renderFooter() {
@@ -345,6 +432,7 @@
     if (!r) return;
     var changed = showView(r.side);
     if (changed || !hasRouted) emit('view', { id: r.side, path: r.side });
+    if (changed && r.side === 'crew') resetCrewFinder();
 
     var room = r.room ? rooms[r.room] : null;
     if (room && room.side === r.side) {
@@ -364,8 +452,8 @@
 
   document.addEventListener('click', function (e) {
     if (!e.target || !e.target.closest) return;
-    var btn = e.target.closest('.room, .door');
-    if (!btn || !btn.dataset.key) return;
+    var btn = e.target.closest('[data-key]');
+    if (!btn) return;
     var room = rooms[btn.dataset.key];
     if (!room) return;
     pushedChit = true;

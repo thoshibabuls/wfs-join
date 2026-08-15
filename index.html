@@ -99,7 +99,19 @@
         <h1 class="side__h" id="crew-h" tabindex="-1">Find your people.</h1>
         <p class="side__intro">Join the speciality that fits what you make. You can be in more than one — tap a room to open its QR code and link.</p>
       </div>
+
+      <!-- Stays on screen while the list scrolls under it, so search and the
+           jump chips are never more than a thumb's reach away on a phone. -->
+      <div class="finder stagger" style="--i:2">
+        <label class="finder__search">
+          <span class="u-hidden">Search specialities</span>
+          <input class="finder__input" id="crew-search" type="search" inputmode="search" autocomplete="off" placeholder="Search — try &ldquo;camera&rdquo; or &ldquo;comedy&rdquo;">
+        </label>
+        <nav class="finder__jump" id="crew-jump" aria-label="Jump to a department"></nav>
+      </div>
+
       <div id="crew-body"></div>
+      <p class="finder__empty" id="crew-empty" role="status" hidden>No specialities match &ldquo;<span id="crew-empty-term"></span>&rdquo;. Not sure where you fit? <a href="#/crew/others" data-key="others">Join Others</a> and we will point you the right way.</p>
     </section>
 
   </main>
